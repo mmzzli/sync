@@ -3,6 +3,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import axios from 'axios';
 import { UserEntity } from './modules/users/user.entity';
 import { UsersService } from './modules/users/users.service';
+import { init } from './common/utils';
 
 const first = 100;
 let skip = 0;
@@ -83,6 +84,9 @@ export class AppService {
 
       // 如果没有数据了，说明当前没有新数据
       if (!users || users.length === 0) {
+        if (init.address === false) {
+          init.address = true;
+        }
         console.log('No new users to process');
         return;
       }

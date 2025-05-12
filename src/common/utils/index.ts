@@ -4,4 +4,8 @@ const cache = new LRUCache({
   ttl: 200 * 1000,
 });
 
+export const init = {
+  address: false,
+};
+
 export default cache;

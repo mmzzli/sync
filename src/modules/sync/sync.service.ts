@@ -11,6 +11,7 @@ import { Repository } from 'typeorm';
 import { SyncEntity } from './sync.entity';
 import { BlackService } from '../black/black.service';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { init } from '../../common/utils';
 
 const batchSize = 20;
 const limit = pLimit(batchSize);
@@ -37,7 +38,12 @@ export class SyncService implements OnModuleInit {
       console.log('Previous request still processing, skipping...');
       return;
     }
+    if (!init.address) {
+      console.log('地址初始化未结束');
+      return;
+    }
     try {
+      this.addresses = await this.usersService.getAllAddress();
       if (!this.addresses.length) {
         console.log('用户地址还不存在');
         return;

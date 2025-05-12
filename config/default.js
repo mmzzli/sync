@@ -2,13 +2,13 @@ const config = {
   typeorm: {
     name: 'default',
     type: 'mysql',
-    host: process.env.DBHOST_ || 'localhost',
+    host: process.env.DBHOST_ || '172.22.0.10',
     port: process.env.DBPORT_ || 3306,
-    username: process.env.SDBUSER_ || 'root',
-    password: process.env.DBPWD_ || 'm123456!@~',
+    username: process.env.SDBUSER_ || 'mysql',
+    password: process.env.DBPWD_ || 'm123456!@',
     database: process.env.DBNAME_ || 'sync',
     synchronize: true,
-    logging: true,
+    logging: false,
     // uuidExtension: true,
     entities: ['dist/**/**/**.entity.js'],
     migrations: ['src/migrations/**/*.ts'],
@@ -23,10 +23,10 @@ const config = {
     charset: 'utf8mb4',
   },
   bsc: {
-    apikey: process.env.BSC_APIKEY || '',
+    apikey: process.env.BSC_APIKEY || 'VBABEJWKPJ9HRNX18WXWZHDUN2C22ENUYD',
   },
   rpc: {
-    url: 'https://bsc.blockpi.network/v1/rpc/cb875e94899d9a9114a3ddd4a2b624215d407ab7',
+    url: 'https://bsc.blockpi.network/v1/rpc/fc1c68a0eb723874ff74f3f0f58fd352e766252d',
   },
   privateKey: process.env.PRIVATE_KEY || '',
 };
