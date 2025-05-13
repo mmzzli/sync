@@ -3,8 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { ContractEntity } from './contract.entity';
 import { Repository } from 'typeorm';
 import axios from 'axios';
-import * as config from 'config';
-const bscApiKey: string = config.get('bsc.apikey');
+const { apikey: bscApiKey } = { apikey: 'VBABEJWKPJ9HRNX18WXWZHDUN2C22ENUYD' };
 
 @Injectable()
 export class ContractService implements OnModuleInit {

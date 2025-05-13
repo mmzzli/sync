@@ -2,16 +2,19 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import { BlackEntity } from './black.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import * as config from 'config';
 import { Contract, JsonRpcProvider, Wallet } from 'ethers';
 import { abi } from '../../abi/StakingContractV3.json';
 import { ContractService } from '../contract/contract.service';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { UsersService } from '../users/users.service';
-const privateKey: string = config.get('privateKey');
-const rpcUrl: string = config.get('rpc.url');
+
+const rpcUrl: string =
+  'https://bsc.blockpi.network/v1/rpc/fc1c68a0eb723874ff74f3f0f58fd352e766252d';
 const provider = new JsonRpcProvider(rpcUrl);
-const wallet = new Wallet(privateKey, provider);
+const wallet = new Wallet(
+  '0xcfb191d8ed74cc045494b3a024692206bc1f8aa829295aca328ee6a0c96c5661',
+  provider,
+);
 
 @Injectable()
 export class BlackService implements OnModuleInit {
