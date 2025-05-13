@@ -34,14 +34,16 @@ export class SyncService implements OnModuleInit {
   @Cron(CronExpression.EVERY_5_SECONDS)
   async sync() {
     console.log(blockNumber, 'blockNumber');
-    if (this.isProcessing) {
-      console.log('Previous request still processing, skipping...');
-      return;
-    }
+
     if (!init.address) {
       console.log('地址初始化未结束');
       return;
     }
+    if (this.isProcessing) {
+      console.log('Previous request still processing, skipping...');
+      return;
+    }
+
     try {
       this.addresses = await this.usersService.getAllAddress();
       if (!this.addresses.length) {

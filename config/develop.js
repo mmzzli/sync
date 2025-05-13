@@ -2,10 +2,10 @@ const config = {
   typeorm: {
     name: 'default',
     type: 'mysql',
-    host: process.env.DBHOST_ || '127.0.0.1',
+    host: process.env.DBHOST_ || 'localhost',
     port: process.env.DBPORT_ || 3306,
     username: process.env.SDBUSER_ || 'root',
-    password: process.env.DBPWD_ || 'm123456!@~',
+    password: process.env.DBPWD_ || '`Str0ng!Passw0rd@2024',
     database: process.env.DBNAME_ || 'sync',
     synchronize: true,
     logging: false,
@@ -30,5 +30,3 @@ const config = {
   },
   privateKey: process.env.PRIVATE_KEY || '',
 };
-
-module.exports = config;

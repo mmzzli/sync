@@ -1,11 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
+import { CronExpression } from '@nestjs/schedule';
 import axios from 'axios';
 import { UserEntity } from './modules/users/user.entity';
 import { UsersService } from './modules/users/users.service';
 import { init } from './common/utils';
+import { CronJob } from 'cron';
 
-const first = 100;
+const first = 1000;
 let skip = 0;
 let isProcessing = false; // 添加处理锁
 
@@ -27,7 +28,7 @@ export class AppService {
     // 服务启动时，从数据库获取最新的 skip 值
     this.initSkip();
   }
-
+  // 服务启动时获取最大的 MAX地址
   private async initSkip() {
     try {
       // 获取数据库中最大的 addressId
@@ -35,31 +36,43 @@ export class AppService {
       console.log(maxId);
       skip = Number(maxId ? maxId : 0);
       console.log(`Initialized skip to ${skip}`);
-      await this.getHello();
+
+      await this.getUsers(() => {
+        if (init.address === false) {
+          init.address = true;
+          // 开启定时任务
+          const job = new CronJob(CronExpression.EVERY_5_SECONDS, () => {
+            this.userJob();
+          });
+          job.start();
+        }
+      }, true);
     } catch (error) {
       console.error('Error initializing skip:', error);
       skip = 0;
     }
   }
 
-  @Cron(CronExpression.EVERY_MINUTE)
-  async getHello(): Promise<string> {
+  // 每隔 30分拉一次地址
+  // @Cron(CronExpression.EVERY_30_MINUTES)
+  async userJob() {
     // 如果正在处理，直接返回
     if (isProcessing) {
       console.log('Previous request still processing, skipping...');
       return 'Hello World!';
     }
-
     try {
       isProcessing = true;
-      await this.getUsers();
+      await this.getUsers(null);
     } finally {
       isProcessing = false;
     }
-    return 'Hello World!';
   }
 
-  async getUsers() {
+  async getUsers(
+    callback: (() => void) | null | undefined,
+    next: boolean = false,
+  ) {
     try {
       const query = {
         query: `{
@@ -84,9 +97,10 @@ export class AppService {
 
       // 如果没有数据了，说明当前没有新数据
       if (!users || users.length === 0) {
-        if (init.address === false) {
-          init.address = true;
+        if (typeof callback === 'function') {
+          callback();
         }
+
         console.log('No new users to process');
         return;
       }
@@ -104,6 +118,9 @@ export class AppService {
       // 更新 skip 值，准备获取下一页
       skip += users.length;
       console.log(skip);
+      if (next) {
+        await this.getUsers(callback, next);
+      }
     } catch (error) {
       console.error('Error processing users:', error);
     }

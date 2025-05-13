@@ -8,7 +8,6 @@ import { abi } from '../../abi/StakingContractV3.json';
 import { ContractService } from '../contract/contract.service';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { UsersService } from '../users/users.service';
-import { it } from 'node:test';
 const privateKey: string = config.get('privateKey');
 const rpcUrl: string = config.get('rpc.url');
 const provider = new JsonRpcProvider(rpcUrl);
