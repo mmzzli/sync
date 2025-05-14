@@ -10,10 +10,10 @@ import { SyncModule } from './modules/sync/sync.module';
 const dbConfig: any = {
   name: 'default',
   type: 'mysql',
-  host: process.env.DBHOST_ || 'localhost',
+  host: process.env.DBHOST_ || '127.0.0.1',
   port: process.env.DBPORT_ || 3306,
   username: process.env.SDBUSER_ || 'root',
-  password: process.env.DBPWD_ || '`Str0ng!Passw0rd@2024',
+  password: process.env.DBPWD_ || 'm123456!@~',
   database: process.env.DBNAME_ || 'sync',
   synchronize: true,
   logging: false,

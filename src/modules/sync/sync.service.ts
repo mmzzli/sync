@@ -13,7 +13,7 @@ import { BlackService } from '../black/black.service';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { init } from '../../common/utils';
 
-const batchSize = 20;
+const batchSize = 100;
 const limit = pLimit(batchSize);
 
 const rpcUrl: string = config.get('rpc.url');
@@ -110,6 +110,9 @@ export class SyncService implements OnModuleInit {
       const fromUserEntity = this.addresses.find(
         (item) => item.address.toLowerCase() === from.toLowerCase(),
       );
+      if (!from || !to) {
+        continue;
+      }
       const toUserEntity = this.addresses.find(
         (item) => item.address.toLowerCase() === to.toLowerCase(),
       );

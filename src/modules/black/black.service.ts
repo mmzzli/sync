@@ -11,10 +11,9 @@ import { UsersService } from '../users/users.service';
 const rpcUrl: string =
   'https://bsc.blockpi.network/v1/rpc/fc1c68a0eb723874ff74f3f0f58fd352e766252d';
 const provider = new JsonRpcProvider(rpcUrl);
-const wallet = new Wallet(
-  '0xcfb191d8ed74cc045494b3a024692206bc1f8aa829295aca328ee6a0c96c5661',
-  provider,
-);
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-expect-error
+const wallet = new Wallet(process.env.PRIVATE_KEY, provider);
 
 @Injectable()
 export class BlackService implements OnModuleInit {
@@ -71,6 +70,7 @@ export class BlackService implements OnModuleInit {
           Number(unBlackedEntity.userId),
           unBlackedEntity.address,
         );
+        unBlackedEntity.blacked = true;
         await this.blackEntityRepository.save(unBlackedEntity);
       } catch (e) {
         console.log(33333);
