@@ -74,6 +74,11 @@ class Bull<T = any> extends EventEmitter {
     this.isRunning = false;
 
     this.init();
+    
+    // 添加定期清理任务
+    setInterval(() => {
+      this.cleanCompletedTasks();
+    }, 60000); // 每分钟清理一次
   }
 
   private init() {
@@ -243,6 +248,8 @@ class Bull<T = any> extends EventEmitter {
 
   private completeTask(task: Task<T>): void {
     this.activeTasks.delete(task.id);
+    task.status = TaskStatus.COMPLETED;
+    task.completedAt = Date.now();
     this.emit('completed', task);
     this.processTasks();
   }
@@ -316,6 +323,28 @@ class Bull<T = any> extends EventEmitter {
           console.error('Error cleaning failed tasks:', err);
         }
       }
+    }
+  }
+
+  // 添加清理已完成任务的方法
+  private cleanCompletedTasks(): void {
+    try {
+      // 清理超过5分钟的已完成任务
+      const now = Date.now();
+      const CLEANUP_THRESHOLD = 5 * 60 * 1000; // 5分钟
+
+      for (const [taskId, task] of this.activeTasks.entries()) {
+        if (task.completedAt && now - task.completedAt > CLEANUP_THRESHOLD) {
+          this.activeTasks.delete(taskId);
+        }
+      }
+
+      // 强制触发GC
+      if (global.gc) {
+        global.gc();
+      }
+    } catch (err) {
+      console.error('Error cleaning completed tasks:', err);
     }
   }
 }
