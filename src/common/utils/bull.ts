@@ -78,7 +78,7 @@ class Bull<T = any> extends EventEmitter {
     // 添加定期清理任务
     setInterval(() => {
       this.cleanCompletedTasks();
-    }, 60000); // 每分钟清理一次
+    }, 1000 * 60); // 每分钟清理一次
   }
 
   private init() {
@@ -329,17 +329,28 @@ class Bull<T = any> extends EventEmitter {
   // 添加清理已完成任务的方法
   private cleanCompletedTasks(): void {
     try {
-      // 清理超过5分钟的已完成任务
       const now = Date.now();
-      const CLEANUP_THRESHOLD = 5 * 60 * 1000; // 5分钟
+      const CLEANUP_THRESHOLD = 5 * 1000;  // 30秒就清理
 
+      // 清理已完成任务
       for (const [taskId, task] of this.activeTasks.entries()) {
         if (task.completedAt && now - task.completedAt > CLEANUP_THRESHOLD) {
           this.activeTasks.delete(taskId);
         }
       }
 
-      // 强制触发GC
+      // 每次清理时打印内存使用情况
+      const used = process.memoryUsage();
+      console.log(this.activeTasks.size,'activeTasks');
+      console.log(this.waitingTasks.size,'waitingTasks');
+      console.log(this.failedTasks.size,'failedTasks');
+      console.log({
+        rss: `${Math.round(used.rss / 1024 / 1024)}MB`,
+        heapTotal: `${Math.round(used.heapTotal / 1024 / 1024)}MB`,
+        heapUsed: `${Math.round(used.heapUsed / 1024 / 1024)}MB`,
+        external: `${Math.round(used.external / 1024 / 1024)}MB`,
+      });
+
       if (global.gc) {
         global.gc();
       }

@@ -17,14 +17,14 @@ import { TxEntity } from './tx.entity';
 const { number: queueNumber } = globalConfig;
 // 创建队列实例
 const blockQueue = new Bull('block-queue', {
-  concurrent: 100, // 同时处理3个任务
+  concurrent: 200, // 同时处理3个任务
   maxRetries: 3, // 最多重试3次
   retryDelay: 1000, // 重试延迟1秒
   dataDir: '.queue', // 数据存储目录
   loadPersisted: true, // 默认不加载之前的任务
 });
 const txQueue = new Bull('tx-queue', {
-  concurrent: 100,
+  concurrent: 200,
   maxRetries: 3, // 最多重试3次
   retryDelay: 1000, // 重试延迟1秒
   dataDir: '.queue', // 数据存储目录
@@ -96,9 +96,9 @@ export class SyncService implements OnModuleInit, OnModuleDestroy {
     if (
       // blockQueue 队列已满
       blockQueue.waitingTasks.size + blockQueue.activeTasks.size >
-        queueNumber / 2 &&
+      100 / 2 &&
       // txQueue 队列已满
-      txQueue.waitingTasks.size + txQueue.activeTasks.size > queueNumber / 2
+      txQueue.waitingTasks.size + txQueue.activeTasks.size > 100 / 2
     ) {
       console.log('扫块队列已满');
       return;
