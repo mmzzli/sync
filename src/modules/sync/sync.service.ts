@@ -92,14 +92,19 @@ export class SyncService implements OnModuleInit, OnModuleDestroy {
       console.log('暂停扫块，用户地址还没准备完毕');
       return;
     }
+
+    const blockQueueStatus = blockQueue.getStatus();
+    const txQueueStatus = txQueue.getStatus();
     // 获取最高块
     if (
       // blockQueue 队列已满
-      blockQueue.waitingTasks.size + blockQueue.activeTasks.size >
-      100 / 2 &&
       // txQueue 队列已满
-      txQueue.waitingTasks.size + txQueue.activeTasks.size > 100 / 2
+      blockQueueStatus.waiting > 100 / 2 &&
+      txQueueStatus.waiting > 100 / 2
     ) {
+      console.log('队列任务过多，等待处理中...');
+      console.log('Block Queue:', blockQueueStatus);
+      console.log('TX Queue:', txQueueStatus);
       console.log('扫块队列已满');
       return;
     }
