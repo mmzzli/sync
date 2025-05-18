@@ -8,6 +8,7 @@ import { ContractService } from '../contract/contract.service';
 import { UsersService } from '../users/users.service';
 
 import * as config from 'config';
+import { Cron, CronExpression } from '@nestjs/schedule';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-expect-error
 const { url } = config.get('rpc');
@@ -49,7 +50,7 @@ export class BlackService implements OnModuleInit {
     }
   }
 
-  // @Cron(CronExpression.EVERY_5_SECONDS)
+  @Cron(CronExpression.EVERY_5_SECONDS)
   async setBlack() {
     if (!this.contractAddress) return;
     const contract = new Contract(this.contractAddress, abi, wallet);
