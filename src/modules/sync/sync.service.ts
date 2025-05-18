@@ -14,7 +14,7 @@ import Bull from '../../common/utils/bull';
 import { BlockEntity } from './block.entity';
 import { TxEntity } from './tx.entity';
 
-const { number: queueNumber, baseBlockNumber } = globalConfig;
+const { number: queueNumber } = globalConfig;
 // 创建队列实例
 const blockQueue = new Bull('block-queue', {
   concurrent: 100, // 同时处理3个任务
@@ -119,9 +119,9 @@ export class SyncService implements OnModuleInit, OnModuleDestroy {
       true,
     ]);
 
-    const blockEntity = new BlockEntity();
-    blockEntity.blockNumber = Number(blockNumber);
-    await this.blockEntityRepository.save(blockEntity);
+    // const blockEntity = new BlockEntity();
+    // blockEntity.blockNumber = Number(blockNumber);
+    // await this.blockEntityRepository.save(blockEntity);
 
     //   将 block transactions 添加进 txquue队列
     for (const transaction of block.transactions) {
@@ -144,10 +144,10 @@ export class SyncService implements OnModuleInit, OnModuleDestroy {
     else {
       await this.syncTransaction(data);
     }
-    const txEntity = new TxEntity();
-    txEntity.hash = data.hash;
-    txEntity.blockNumber = Number(data.blockNumber);
-    await this.txEntityRepository.save(txEntity);
+    // const txEntity = new TxEntity();
+    // txEntity.hash = data.hash;
+    // txEntity.blockNumber = Number(data.blockNumber);
+    // await this.txEntityRepository.save(txEntity);
   }
 
   async syncTransaction(transaction: any) {

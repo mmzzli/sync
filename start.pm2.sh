@@ -9,4 +9,4 @@ echo
 export PRIVATE_KEY=$PRIVATE_KEY
 export NODE_ENV=development
 export PORT=3001
-npm run start:dev
+pm2 start npm --name constract-sync -- start
