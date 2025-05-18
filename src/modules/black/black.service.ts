@@ -5,13 +5,13 @@ import { Repository } from 'typeorm';
 import { Contract, JsonRpcProvider, Wallet } from 'ethers';
 import { abi } from '../../abi/StakingContractV3.json';
 import { ContractService } from '../contract/contract.service';
-import { Cron, CronExpression } from '@nestjs/schedule';
 import { UsersService } from '../users/users.service';
 
 import * as config from 'config';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-expect-error
 const { url } = config.get('rpc');
+console.log(url, '-------');
 const provider = new JsonRpcProvider(url);
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
