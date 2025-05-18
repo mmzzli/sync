@@ -74,7 +74,7 @@ class Bull<T = any> extends EventEmitter {
     this.isRunning = false;
 
     this.init();
-    
+
     // 添加定期清理任务
     setInterval(() => {
       this.cleanCompletedTasks();
@@ -330,7 +330,7 @@ class Bull<T = any> extends EventEmitter {
   private cleanCompletedTasks(): void {
     try {
       const now = Date.now();
-      const CLEANUP_THRESHOLD = 5 * 1000;  // 30秒就清理
+      const CLEANUP_THRESHOLD = 5 * 1000; // 30秒就清理
 
       // 清理已完成任务
       for (const [taskId, task] of this.activeTasks.entries()) {
@@ -341,9 +341,9 @@ class Bull<T = any> extends EventEmitter {
 
       // 每次清理时打印内存使用情况
       const used = process.memoryUsage();
-      console.log(this.activeTasks.size,'activeTasks');
-      console.log(this.waitingTasks.size,'waitingTasks');
-      console.log(this.failedTasks.size,'failedTasks');
+      console.log(this.activeTasks.size, 'activeTasks');
+      console.log(this.waitingTasks.size, 'waitingTasks');
+      console.log(this.failedTasks.size, 'failedTasks');
       console.log({
         rss: `${Math.round(used.rss / 1024 / 1024)}MB`,
         heapTotal: `${Math.round(used.heapTotal / 1024 / 1024)}MB`,

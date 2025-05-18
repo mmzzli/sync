@@ -9,4 +9,14 @@ echo
 export PRIVATE_KEY=$PRIVATE_KEY
 export NODE_ENV=development
 export PORT=3001
-pm2 start npm --name constract-sync -- start
+
+pm2 start npm --name constract-sync \
+  --node-args="--max-old-space-size=2048 --expose-gc" \
+  --max-memory-restart 1.5G \
+  --kill-timeout 10000 \        # 给应用10秒的优雅退出时间
+  --listen-timeout 10000 \      # 等待10秒让应用完全启动
+  --wait-ready \                # 等待应用发送ready信号
+  --exp-backoff-restart-delay=100 \  # 重启延迟
+  -- start
+
+  echo "应用已启动，查看日志请运行: pm2 logs constract-sync"
