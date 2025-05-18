@@ -95,9 +95,10 @@ export class SyncService implements OnModuleInit, OnModuleDestroy {
     // 获取最高块
     if (
       // blockQueue 队列已满
-      blockQueue.waitingTasks.size + blockQueue.activeTasks.size > 100 / 2 &&
+      blockQueue.waitingTasks.size + blockQueue.activeTasks.size >
+        queueNumber / 2 &&
       // txQueue 队列已满
-      txQueue.waitingTasks.size + txQueue.activeTasks.size > 100 / 2
+      txQueue.waitingTasks.size + txQueue.activeTasks.size > queueNumber / 2
     ) {
       console.log('扫块队列已满');
       return;

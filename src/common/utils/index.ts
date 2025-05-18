@@ -23,6 +23,6 @@ export const globalConfig: {
   number: number;
 } = {
   baseBlockNumber: getBaseBlockNumber(), //高度差
-  number: 100,
+  number: 30,
 };
 export default cache;
