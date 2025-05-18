@@ -124,23 +124,28 @@ export class SyncService implements OnModuleInit, OnModuleDestroy {
       Number(globalConfig.baseBlockNumber) + length;
   }
   async syncBlock(blockNumber: string | number) {
-    const blockNumberHex = `0x${BigInt(blockNumber).toString(16)}`;
-    const block: any = await provider.send('eth_getBlockByNumber', [
-      blockNumberHex,
-      true,
-    ]);
+    try {
+      const blockNumberHex = `0x${BigInt(blockNumber).toString(16)}`;
+      const block: any = await provider.send('eth_getBlockByNumber', [
+        blockNumberHex,
+        true,
+      ]);
 
-    // const blockEntity = new BlockEntity();
-    // blockEntity.blockNumber = Number(blockNumber);
-    // await this.blockEntityRepository.save(blockEntity);
+      if (!block) {
+        console.log(`Block ${blockNumber} not found`);
+        return;
+      }
 
-    //   将 block transactions 添加进 txquue队列
-    for (const transaction of block.transactions) {
-      txQueue.add({
-        id: transaction.hash,
-        name: transaction.hash,
-        data: transaction,
-      });
+      for (const transaction of block.transactions) {
+        txQueue.add({
+          id: transaction.hash,
+          name: transaction.hash,
+          data: transaction,
+        });
+      }
+    } catch (error) {
+      console.error(`获取区块 ${blockNumber} 失败:`, error.message);
+      throw error; // 让 Bull 队列进行重试
     }
   }
 

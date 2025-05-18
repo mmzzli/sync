@@ -78,7 +78,7 @@ class Bull<T = any> extends EventEmitter {
     // 添加定期清理任务
     setInterval(() => {
       this.cleanCompletedTasks();
-    }, 1000 * 60); // 每分钟清理一次
+    }, 500 * 60); // 每分钟清理一次
   }
 
   private init() {
