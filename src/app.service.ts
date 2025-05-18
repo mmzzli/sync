@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import { CronExpression } from '@nestjs/schedule';
+import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import axios from 'axios';
 import { UserEntity } from './modules/users/user.entity';
 import { UsersService } from './modules/users/users.service';
@@ -23,11 +23,14 @@ const config = {
 };
 
 @Injectable()
-export class AppService {
+export class AppService implements OnModuleInit {
   constructor(private readonly usersService: UsersService) {
     // 服务启动时，从数据库获取最新的 skip 值
-    this.initSkip();
   }
+  async onModuleInit() {
+    await this.initSkip();
+  }
+
   // 服务启动时获取最大的 MAX地址
   private async initSkip() {
     try {
@@ -54,7 +57,7 @@ export class AppService {
   }
 
   // 每隔 30分拉一次地址
-  // @Cron(CronExpression.EVERY_30_MINUTES)
+  @Cron(CronExpression.EVERY_30_MINUTES)
   async userJob() {
     // 如果正在处理，直接返回
     if (isProcessing) {
@@ -93,7 +96,6 @@ export class AppService {
       }
 
       const users = res.data.data.users;
-      console.log(users.length, 'length-----------');
 
       // 如果没有数据了，说明当前没有新数据
       if (!users || users.length === 0) {
@@ -108,7 +110,7 @@ export class AppService {
       const userEntities = users.map((item, index: number) => {
         const entity = new UserEntity();
         entity.addressId = String(Number(skip) + index + 1);
-        entity.address = item.id;
+        entity.address = item.id.toLowerCase();
         return entity;
       });
 
@@ -117,7 +119,6 @@ export class AppService {
 
       // 更新 skip 值，准备获取下一页
       skip += users.length;
-      console.log(skip);
       if (next) {
         await this.getUsers(callback, next);
       }

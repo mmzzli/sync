@@ -5,10 +5,12 @@ import { SyncEntity } from './sync.entity';
 import { ContractModule } from '../contract/contract.module';
 import { UsersModule } from '../users/users.module';
 import { BlackModule } from '../black/black.module';
+import { BlockEntity } from './block.entity';
+import { TxEntity } from './tx.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([SyncEntity]),
+    TypeOrmModule.forFeature([SyncEntity, BlockEntity, TxEntity]),
     ContractModule,
     UsersModule,
     BlackModule,

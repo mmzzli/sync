@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserEntity } from './user.entity';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 
 @Injectable()
 export class UsersService {
@@ -25,15 +25,6 @@ export class UsersService {
     return Number(result?.maxId) || 0;
   }
 
-  // 获取所有地址
-  async getAllAddress(): Promise<UserEntity[]> {
-    // 放在内存中
-    const userEntities = await this.userRepository.find({
-      where: { status: 1 }, // 1没有被拉黑过  0 就是拉黑过
-    });
-    return userEntities;
-  }
-
   async changeAddress(id: number, address: string) {
     const entity = await this.userRepository.findOne({
       where: { id, address },
@@ -44,5 +35,13 @@ export class UsersService {
     }
     entity.status = 0;
     await this.userRepository.save(entity);
+  }
+
+  async findFromAndTo(from: string, to: string) {
+    return await this.userRepository.find({
+      where: {
+        address: In([from, to]),
+      },
+    });
   }
 }

@@ -8,9 +8,12 @@ import { ContractService } from '../contract/contract.service';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { UsersService } from '../users/users.service';
 
-const rpcUrl: string =
-  'https://bsc.blockpi.network/v1/rpc/fc1c68a0eb723874ff74f3f0f58fd352e766252d';
-const provider = new JsonRpcProvider(rpcUrl);
+import * as config from 'config';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-expect-error
+const { url } = config.get('rpc');
+const provider = new JsonRpcProvider(url);
+
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-expect-error
 const wallet = new Wallet(process.env.PRIVATE_KEY, provider);
@@ -46,7 +49,7 @@ export class BlackService implements OnModuleInit {
     }
   }
 
-  @Cron(CronExpression.EVERY_5_SECONDS)
+  // @Cron(CronExpression.EVERY_5_SECONDS)
   async setBlack() {
     if (!this.contractAddress) return;
     const contract = new Contract(this.contractAddress, abi, wallet);
@@ -73,7 +76,6 @@ export class BlackService implements OnModuleInit {
         unBlackedEntity.blacked = true;
         await this.blackEntityRepository.save(unBlackedEntity);
       } catch (e) {
-        console.log(33333);
         console.log(e.message);
       }
     }
