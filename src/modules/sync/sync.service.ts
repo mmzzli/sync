@@ -17,18 +17,18 @@ import { TxEntity } from './tx.entity';
 const { number: queueNumber } = globalConfig;
 // 创建队列实例
 const blockQueue = new Bull('block-queue', {
-  concurrent: 200, // 同时处理3个任务
-  maxRetries: 3, // 最多重试3次
-  retryDelay: 1000, // 重试延迟1秒
-  dataDir: '.queue', // 数据存储目录
-  loadPersisted: true, // 默认不加载之前的任务
+  concurrent: 50,  // 降低并发数，避免产生太多tx任务
+  maxRetries: 3,
+  retryDelay: 1000,
+  dataDir: '.queue',
+  loadPersisted: true,
 });
 const txQueue = new Bull('tx-queue', {
-  concurrent: 200,
-  maxRetries: 3, // 最多重试3次
-  retryDelay: 1000, // 重试延迟1秒
-  dataDir: '.queue', // 数据存储目录
-  loadPersisted: true, // 默认不加载之前的任务
+  concurrent: 100, // 降低并发数，避免内存压力
+  maxRetries: 3,
+  retryDelay: 1000,
+  dataDir: '.queue',
+  loadPersisted: true,
 });
 interface TxTask {
   id: string;
@@ -95,12 +95,11 @@ export class SyncService implements OnModuleInit, OnModuleDestroy {
 
     const blockQueueStatus = blockQueue.getStatus();
     const txQueueStatus = txQueue.getStatus();
+
     // 获取最高块
     if (
-      // blockQueue 队列已满
-      // txQueue 队列已满
-      blockQueueStatus.waiting > 100 / 2 &&
-      txQueueStatus.waiting > 100 / 2
+      blockQueueStatus.waiting > 30 ||  // 降低阈值，更早开始限流
+      txQueueStatus.waiting > 1000      // 大幅降低阈值，避免tx队列爆炸
     ) {
       console.log('队列任务过多，等待处理中...');
       console.log('Block Queue:', blockQueueStatus);
@@ -108,11 +107,12 @@ export class SyncService implements OnModuleInit, OnModuleDestroy {
       console.log('扫块队列已满');
       return;
     }
+
     console.log(`开启扫块，${Number(globalConfig.baseBlockNumber)} `);
 
     const blockNumber = await provider.getBlockNumber();
     const blockDiff = blockNumber - Number(globalConfig.baseBlockNumber);
-    const length = Math.min(queueNumber, blockDiff);
+    const length = Math.min(10, blockDiff);  // 每次最多添加10个区块
 
     for (let i = 0; i < length; i++) {
       blockQueue.add({
@@ -120,8 +120,7 @@ export class SyncService implements OnModuleInit, OnModuleDestroy {
         name: Number(globalConfig.baseBlockNumber) + i,
       });
     }
-    globalConfig.baseBlockNumber =
-      Number(globalConfig.baseBlockNumber) + length;
+    globalConfig.baseBlockNumber = Number(globalConfig.baseBlockNumber) + length;
   }
   async syncBlock(blockNumber: string | number) {
     try {
