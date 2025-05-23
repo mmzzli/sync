@@ -8,9 +8,8 @@ export class BlockEntity extends BaseEntity {
 
   @Column({
     nullable: false,
-    type: 'int',
     comment: 'blocknumber',
     name: 'block_number',
   })
-  blockNumber: number;
+  blockNumber: string;
 }

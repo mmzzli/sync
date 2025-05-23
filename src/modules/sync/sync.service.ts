@@ -14,10 +14,9 @@ import Bull from '../../common/utils/bull';
 import { BlockEntity } from './block.entity';
 import { TxEntity } from './tx.entity';
 
-const { number: queueNumber } = globalConfig;
 // 创建队列实例
 const blockQueue = new Bull('block-queue', {
-  concurrent: 50,  // 降低并发数，避免产生太多tx任务
+  concurrent: 50, // 降低并发数，避免产生太多tx任务
   maxRetries: 3,
   retryDelay: 1000,
   dataDir: '.queue',
@@ -98,8 +97,8 @@ export class SyncService implements OnModuleInit, OnModuleDestroy {
 
     // 获取最高块
     if (
-      blockQueueStatus.waiting > 30 ||  // 降低阈值，更早开始限流
-      txQueueStatus.waiting > 1000      // 大幅降低阈值，避免tx队列爆炸
+      blockQueueStatus.waiting > 30 || // 降低阈值，更早开始限流
+      txQueueStatus.waiting > 1000 // 大幅降低阈值，避免tx队列爆炸
     ) {
       console.log('队列任务过多，等待处理中...');
       console.log('Block Queue:', blockQueueStatus);
@@ -112,7 +111,7 @@ export class SyncService implements OnModuleInit, OnModuleDestroy {
 
     const blockNumber = await provider.getBlockNumber();
     const blockDiff = blockNumber - Number(globalConfig.baseBlockNumber);
-    const length = Math.min(10, blockDiff);  // 每次最多添加10个区块
+    const length = Math.min(10, blockDiff); // 每次最多添加10个区块
 
     for (let i = 0; i < length; i++) {
       blockQueue.add({
@@ -120,7 +119,8 @@ export class SyncService implements OnModuleInit, OnModuleDestroy {
         name: Number(globalConfig.baseBlockNumber) + i,
       });
     }
-    globalConfig.baseBlockNumber = Number(globalConfig.baseBlockNumber) + length;
+    globalConfig.baseBlockNumber =
+      Number(globalConfig.baseBlockNumber) + length;
   }
   async syncBlock(blockNumber: string | number) {
     try {
@@ -142,6 +142,11 @@ export class SyncService implements OnModuleInit, OnModuleDestroy {
           data: transaction,
         });
       }
+
+      const entity = new BlockEntity();
+      entity.blockNumber = blockNumber.toString();
+      // 异步保存下来
+      await this.blockEntityRepository.save(entity);
     } catch (error) {
       console.error(`获取区块 ${blockNumber} 失败:`, error.message);
       throw error; // 让 Bull 队列进行重试
