@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { BlackEntity } from './black.entity';
 import { ContractModule } from '../contract/contract.module';
 import { UsersModule } from '../users/users.module';
+import { BlackController } from './black.controller';
 
 @Module({
   imports: [
@@ -13,5 +14,6 @@ import { UsersModule } from '../users/users.module';
   ],
   providers: [BlackService],
   exports: [BlackService],
+  controllers: [BlackController],
 })
 export class BlackModule {}

@@ -81,4 +81,19 @@ export class BlackService implements OnModuleInit {
       }
     }
   }
+
+  async getList() {
+    return await this.blackEntityRepository.find({
+      order: { id: 'DESC' },
+      take: 30,
+    });
+  }
+
+  async searchBlack(address: string) {
+    return await this.blackEntityRepository.findOne({
+      where: {
+        address,
+      },
+    });
+  }
 }
