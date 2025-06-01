@@ -12,7 +12,7 @@ export class UsersService {
 
   //  批量保存
   async batchSave(users: UserEntity[]) {
-    await this.userRepository.save(users);
+    await this.userRepository.upsert(users, ['address']);
   }
 
   // 获取最大的 addressId
