@@ -10,7 +10,7 @@ export class UserEntity extends BaseEntity {
     nullable: false,
     length: 255,
     comment: 'address 地址',
-    name: ' address',
+    name: 'address',
   })
   address: string;
 
