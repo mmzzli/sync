@@ -82,18 +82,23 @@ export class BlackService implements OnModuleInit {
     }
   }
 
-  async getList() {
-    return await this.blackEntityRepository.find({
-      order: { id: 'DESC' },
-      take: 30,
-    });
+  getBuilder() {
+    const builder = this.blackEntityRepository.createQueryBuilder('black');
+    builder
+      .leftJoin('sync', 'sync', 'black.sync_id = sync.id')
+      .addSelect('black.*')
+      .addSelect('sync.*');
+    return builder;
+  }
+  async getList(): Promise<any[]> {
+    const builder = this.getBuilder().take(30).addOrderBy('black.id', 'DESC');
+    return await builder.getRawMany();
   }
 
-  async searchBlack(address: string) {
-    return await this.blackEntityRepository.findOne({
-      where: {
-        address,
-      },
+  async searchBlack(address: string): Promise<any> {
+    const builder = this.getBuilder().where('black.address = :address', {
+      address,
     });
+    return await builder.getRawOne();
   }
 }
