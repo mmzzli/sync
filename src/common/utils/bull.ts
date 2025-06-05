@@ -48,12 +48,13 @@ type Processor<T = any> = (data: T) => Promise<void>;
 
 class Bull<T = any> extends EventEmitter {
   private queueName: string;
+  private waitingTasks: Map<string, Task<T>> = new Map();
+  private activeTasks: Map<string, Task<T>> = new Map();
+  private failedTasksCount: number = 0; // 只存储失败任务的数量
   private options: Required<QueueOptions>;
-  waitingTasks: Map<string, Task<T>>;
-  activeTasks: Map<string, Task<T>>;
-  failedTasks: Map<string, Task<T>>;
-  private processor: Processor<T> | null;
-  private isRunning: boolean;
+  private processor: ((data: T) => Promise<void>) | null = null;
+  private isProcessing: boolean = false;
+  private retryInterval: NodeJS.Timeout | null = null; // 添加重试定时器
 
   constructor(queueName: string, options: QueueOptions = {}) {
     super();
@@ -63,22 +64,11 @@ class Bull<T = any> extends EventEmitter {
       concurrent: 1,
       maxRetries: 3,
       retryDelay: 1000,
-      loadPersisted: false,
+      loadPersisted: true,
       ...options,
-    };
-
-    this.waitingTasks = new Map();
-    this.activeTasks = new Map();
-    this.failedTasks = new Map();
-    this.processor = null;
-    this.isRunning = false;
-
+    } as Required<QueueOptions>;
     this.init();
-
-    // 添加定期清理任务
-    setInterval(() => {
-      this.cleanCompletedTasks();
-    }, 500 * 60); // 每分钟清理一次
+    this.startRetryInterval(); // 启动重试定时器
   }
 
   private init() {
@@ -124,10 +114,7 @@ class Bull<T = any> extends EventEmitter {
       try {
         const content = fs.readFileSync(failedPath, 'utf8');
         const tasks = JSON.parse(content) as Task<T>[];
-        for (const task of tasks) {
-          task.status = TaskStatus.FAILED;
-          this.failedTasks.set(task.id, task);
-        }
+        this.failedTasksCount = tasks.length; // 只更新计数
       } catch (err: any) {
         if (err.code !== 'ENOENT') {
           console.error('Error loading failed tasks:', err);
@@ -138,7 +125,7 @@ class Bull<T = any> extends EventEmitter {
     }
 
     console.log(
-      `Loaded ${this.waitingTasks.size} waiting tasks and ${this.failedTasks.size} failed tasks`,
+      `Loaded ${this.waitingTasks.size} waiting tasks and ${this.failedTasksCount} failed tasks`,
     );
   }
 
@@ -161,19 +148,49 @@ class Bull<T = any> extends EventEmitter {
   }
 
   private saveFailedTasks(): void {
-    const tasks = Array.from(this.failedTasks.values());
-    if (tasks.length > 0) {
-      fs.writeFileSync(
-        this.getFilePath('FAILED'),
-        JSON.stringify(tasks, null, 2),
-      );
-    } else {
-      try {
-        fs.unlinkSync(this.getFilePath('FAILED'));
-      } catch (err: any) {
-        if (err.code !== 'ENOENT') {
-          console.error('Error removing failed tasks file:', err);
-        }
+    const failedPath = this.getFilePath('FAILED');
+    try {
+      const content = fs.readFileSync(failedPath, 'utf8');
+      const tasks = JSON.parse(content) as Task<T>[];
+      tasks.push({
+        id: Date.now().toString(),
+        status: TaskStatus.FAILED,
+        data: {} as T,
+        opts: {
+          attempts: 0,
+          maxRetries: this.options.maxRetries || 3,
+          retryDelay: this.options.retryDelay || 1000,
+        },
+        lastError: 'Task failed',
+        timestamp: Date.now(),
+      });
+      fs.writeFileSync(failedPath, JSON.stringify(tasks, null, 2));
+    } catch (err: any) {
+      if (err.code === 'ENOENT') {
+        // 如果文件不存在,创建新文件
+        fs.writeFileSync(
+          failedPath,
+          JSON.stringify(
+            [
+              {
+                id: Date.now().toString(),
+                status: TaskStatus.FAILED,
+                data: {} as T,
+                opts: {
+                  attempts: 0,
+                  maxRetries: this.options.maxRetries || 3,
+                  retryDelay: this.options.retryDelay || 1000,
+                },
+                lastError: 'Task failed',
+                timestamp: Date.now(),
+              },
+            ],
+            null,
+            2,
+          ),
+        );
+      } else {
+        console.error('Error saving failed tasks:', err);
       }
     }
   }
@@ -195,7 +212,7 @@ class Bull<T = any> extends EventEmitter {
     this.waitingTasks.set(taskId, task);
     this.emit('waiting', task);
 
-    if (this.isRunning) {
+    if (this.isProcessing) {
       this.processTasks();
     }
 
@@ -208,13 +225,13 @@ class Bull<T = any> extends EventEmitter {
     }
 
     this.processor = processor;
-    this.isRunning = true;
+    this.isProcessing = true;
 
     this.processTasks();
   }
 
   private processTasks(): void {
-    if (!this.isRunning || !this.processor) return;
+    if (!this.isProcessing || !this.processor) return;
 
     try {
       if (this.activeTasks.size >= this.options.concurrent) {
@@ -269,15 +286,66 @@ class Bull<T = any> extends EventEmitter {
       setTimeout(() => this.processTasks(), task.opts.retryDelay);
     } else {
       task.status = TaskStatus.FAILED;
-      this.failedTasks.set(task.id, task);
-      this.saveFailedTasks();
+      this.failedTasksCount++; // 增加失败计数
+      this.saveFailedTasks(); // 保存到文件
 
       this.emit('failed', task, error);
     }
   }
 
+  // 添加启动重试定时器的方法
+  private startRetryInterval(): void {
+    // 每20分钟执行一次重试
+    this.retryInterval = setInterval(
+      () => {
+        this.retryFailedTasks();
+      },
+      20 * 60 * 1000,
+    );
+  }
+
+  // 添加重试失败任务的方法
+  private retryFailedTasks(): void {
+    try {
+      const failedPath = this.getFilePath('FAILED');
+      const content = fs.readFileSync(failedPath, 'utf8');
+      const tasks = JSON.parse(content) as Task<T>[];
+
+      if (tasks.length === 0) return;
+
+      console.log(`开始重试 ${tasks.length} 个失败任务`);
+
+      // 重置任务状态并重新加入队列
+      for (const task of tasks) {
+        task.status = TaskStatus.WAITING;
+        task.opts.attempts = 0; // 重置重试次数
+        task.lastError = undefined;
+        this.waitingTasks.set(task.id, task);
+      }
+
+      // 清空失败任务文件
+      fs.writeFileSync(failedPath, JSON.stringify([], null, 2));
+      this.failedTasksCount = 0;
+
+      // 开始处理任务
+      if (this.isProcessing) {
+        this.processTasks();
+      }
+    } catch (err: any) {
+      if (err.code !== 'ENOENT') {
+        console.error('重试失败任务时出错:', err);
+      }
+    }
+  }
+
   async pause(): Promise<void> {
-    this.isRunning = false; // 停止接收新任务
+    this.isProcessing = false;
+
+    // 停止重试定时器
+    if (this.retryInterval) {
+      clearInterval(this.retryInterval);
+      this.retryInterval = null;
+    }
 
     // 等待所有活动任务完成
     while (this.activeTasks.size > 0) {
@@ -286,13 +354,13 @@ class Bull<T = any> extends EventEmitter {
 
     // 保存剩余的等待任务
     this.saveWaitingTasks();
-    this.saveFailedTasks();
 
     this.emit('paused');
   }
 
   resume(): void {
-    this.isRunning = true;
+    this.isProcessing = true;
+    this.startRetryInterval(); // 恢复重试定时器
     this.emit('resumed');
     this.processTasks();
   }
@@ -305,7 +373,7 @@ class Bull<T = any> extends EventEmitter {
     return {
       waiting: this.waitingTasks.size,
       active: this.activeTasks.size,
-      failed: this.failedTasks.size,
+      failed: this.failedTasksCount, // 返回失败计数
     };
   }
 
@@ -316,7 +384,7 @@ class Bull<T = any> extends EventEmitter {
         const stat = fs.statSync(failedPath);
         if (Date.now() - stat.mtime.getTime() > grace) {
           fs.unlinkSync(failedPath);
-          this.failedTasks.clear();
+          this.failedTasksCount = 0;
         }
       } catch (err: any) {
         if (err.code !== 'ENOENT') {
@@ -343,7 +411,7 @@ class Bull<T = any> extends EventEmitter {
       const used = process.memoryUsage();
       console.log(this.activeTasks.size, 'activeTasks');
       console.log(this.waitingTasks.size, 'waitingTasks');
-      console.log(this.failedTasks.size, 'failedTasks');
+      console.log(this.failedTasksCount, 'failedTasks');
       console.log({
         rss: `${Math.round(used.rss / 1024 / 1024)}MB`,
         heapTotal: `${Math.round(used.heapTotal / 1024 / 1024)}MB`,

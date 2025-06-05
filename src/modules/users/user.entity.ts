@@ -11,6 +11,7 @@ export class UserEntity extends BaseEntity {
     length: 255,
     comment: 'address 地址',
     name: 'address',
+    unique: true,
   })
   address: string;
 
