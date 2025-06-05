@@ -43,7 +43,7 @@ export class BlackService implements OnModuleInit {
         entity.address = item.address;
         entity.userId = item.userId;
         entity.syncId = item.syncId;
-        await this.blackEntityRepository.save(entity);
+        await this.blackEntityRepository.upsert(entity, ['address']);
       }
     } catch (e) {
       console.log(e.message);
