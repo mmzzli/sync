@@ -125,14 +125,12 @@ export class SyncService implements OnModuleInit, OnModuleDestroy {
   }
   async syncBlock(blockNumber: string | number) {
     try {
-      const hexBlockNumber = `0x${BigInt(blockNumber).toString(16)}`;
+      const blockNumberHex = `0x${BigInt(blockNumber).toString(16)}`;
 
-      const { data: block } = await axios.post(rpcUrl, {
-        jsonrpc: '2.0',
-        method: 'eth_getBlockByNumber',
-        params: [hexBlockNumber, true], // true 表示返回完整交易对象
-        id: 1,
-      });
+      const block: any = await provider.send('eth_getBlockByNumber', [
+        blockNumberHex,
+        true,
+      ]);
 
       if (!block) {
         console.log(`Block ${blockNumber} not found`);
@@ -158,11 +156,16 @@ export class SyncService implements OnModuleInit, OnModuleDestroy {
   }
 
   async parseTransaction(data: any) {
-    const { input, hash } = data;
+    const { input, hash, to } = data;
 
     // 合约
     if (input !== '0x') {
-      await this.parseContractTransaction(hash);
+      if (
+        to &&
+        to.toLowerCase() === '0x55d398326f99059fF775485246999027B3197955'
+      ) {
+        await this.parseContractTransaction(hash);
+      }
     }
     // 普通交易
     else {
