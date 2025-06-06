@@ -26,7 +26,7 @@ module.exports = {
     apikey: process.env.BSC_APIKEY || 'VBABEJWKPJ9HRNX18WXWZHDUN2C22ENUYD',
   },
   rpc: {
-    url: 'https://distinguished-skilled-orb.bsc.quiknode.pro/5b0fd2381287a3b4740485017d18874932a1bec1/',
+    url: 'https://bsc.blockpi.network/v1/rpc/81fba11a108ca5e7e42724acd5114c643b387e46',
   },
   privateKey: process.env.PRIVATE_KEY || '',
 };

@@ -16,14 +16,14 @@ import { TxEntity } from './tx.entity';
 
 // 创建队列实例
 const blockQueue = new Bull('block-queue', {
-  concurrent: 10, // 降低并发数，避免产生太多tx任务
+  concurrent: 50, // 降低并发数，避免产生太多tx任务
   maxRetries: 10,
   retryDelay: 1000,
   dataDir: '.queue',
   loadPersisted: true,
 });
 const txQueue = new Bull('tx-queue', {
-  concurrent: 30, // 降低并发数，避免内存压力
+  concurrent: 200, // 降低并发数，避免内存压力
   maxRetries: 10,
   retryDelay: 1000,
   dataDir: '.queue',
