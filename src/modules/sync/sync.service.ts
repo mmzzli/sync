@@ -13,6 +13,7 @@ import { globalConfig, init } from '../../common/utils';
 import Bull from '../../common/utils/bull';
 import { BlockEntity } from './block.entity';
 import { TxEntity } from './tx.entity';
+import axios from 'axios';
 
 // 创建队列实例
 const blockQueue = new Bull('block-queue', {
@@ -124,11 +125,14 @@ export class SyncService implements OnModuleInit, OnModuleDestroy {
   }
   async syncBlock(blockNumber: string | number) {
     try {
-      const blockNumberHex = `0x${BigInt(blockNumber).toString(16)}`;
-      const block: any = await provider.send('eth_getBlockByNumber', [
-        blockNumberHex,
-        true,
-      ]);
+      const hexBlockNumber = `0x${BigInt(blockNumber).toString(16)}`;
+
+      const { data: block } = await axios.post(rpcUrl, {
+        jsonrpc: '2.0',
+        method: 'eth_getBlockByNumber',
+        params: [hexBlockNumber, true], // true 表示返回完整交易对象
+        id: 1,
+      });
 
       if (!block) {
         console.log(`Block ${blockNumber} not found`);
