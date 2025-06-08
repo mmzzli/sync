@@ -179,6 +179,7 @@ export class SyncService implements OnModuleInit, OnModuleDestroy {
 
   async syncTransaction(transaction: any) {
     const { from, to } = transaction;
+    if (from === to) return;
     if (!from || !to) {
       return;
     }
@@ -245,6 +246,8 @@ export class SyncService implements OnModuleInit, OnModuleDestroy {
           .getAddress('0x' + topics[1].slice(26))
           .toLowerCase();
         const to = ethers.getAddress('0x' + topics[2].slice(26)).toLowerCase();
+
+        if (from === to) return;
 
         const userEntitys = await this.usersService.findFromAndTo(from, to);
 
