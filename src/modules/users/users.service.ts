@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserEntity } from './user.entity';
-import { In, Repository } from 'typeorm';
+import { Between, In, Repository } from 'typeorm';
 
 @Injectable()
 export class UsersService {
@@ -41,6 +41,14 @@ export class UsersService {
     return await this.userRepository.find({
       where: {
         address: In([from, to]),
+      },
+    });
+  }
+
+  async getAllUser(startId: number, endId: number) {
+    return await this.userRepository.find({
+      where: {
+        id: Between(startId, endId),
       },
     });
   }

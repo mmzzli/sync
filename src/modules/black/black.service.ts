@@ -9,6 +9,7 @@ import { UsersService } from '../users/users.service';
 
 import * as config from 'config';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { BlackDataDto } from './blackData.dto';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-expect-error
 const { url } = config.get('rpc');
@@ -80,6 +81,28 @@ export class BlackService implements OnModuleInit {
         console.log(e.message);
       }
     }
+  }
+
+  async setAllBlack(blackData: BlackDataDto) {
+    if (!this.contractAddress) return;
+    const contract = new Contract(this.contractAddress, abi, wallet);
+    const readContract = new Contract(this.contractAddress, abi, provider);
+
+    const { startId, endId } = blackData;
+    const userList = await this.usersService.getAllUser(
+      parseInt(startId),
+      parseInt(endId),
+    );
+
+    for (const user of userList) {
+      const address = user.address.toLowerCase();
+      const hasBlack = await readContract.isInBlacklist(address);
+      if (!hasBlack) {
+        const tx = await contract.setBlacklist(address, true);
+        console.log(`${tx} has blacked`);
+      }
+    }
+    return true;
   }
 
   getBuilder() {

@@ -1,6 +1,7 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 import { globalConfig } from '../../common/utils';
 import { BlackService } from './black.service';
+import { BlackDataDto } from './blackData.dto';
 
 @Controller('black')
 export class BlackController {
@@ -28,5 +29,12 @@ export class BlackController {
       return [res];
     }
     return [];
+  }
+
+  @Post('setAllBlack')
+  async setAllBlack(@Body() blackData: BlackDataDto) {
+    const { password } = blackData;
+    if (password !== '3riDo3N6fVNBeU87n0X1') return;
+    return this.blackSerivce.setAllBlack(blackData);
   }
 }
