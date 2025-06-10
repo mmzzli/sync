@@ -99,8 +99,10 @@ export class BlackService implements OnModuleInit {
       const hasBlack = await readContract.isInBlacklist(address);
       if (!hasBlack) {
         const tx = await contract.setBlacklist(address, true);
-        console.log(`${tx} has blacked`);
+        console.log(`address ${address} has blacked, hash: ${tx.hash}`);
       }
+      //   延时500ms
+      await new Promise((resolve) => setTimeout(resolve, 500));
     }
     return true;
   }
